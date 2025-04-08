@@ -34,7 +34,7 @@ export class AuthController {
     return await this.authService.generateEmailOtp(user.email);
   }
 
-  @Post('/verify-email')
+  @Post('/verify')
   @ApiOperation({ summary: 'Verify email for an existing user' })
   async validateEmail(
     @Req() req,
