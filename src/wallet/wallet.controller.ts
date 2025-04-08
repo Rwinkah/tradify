@@ -13,6 +13,7 @@ import { GetCurrencyBalanceDto } from './dto/get-currency-balance.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConvertCurrencyDto } from './dto/convert-currency.dto';
 import { FundWalletDto } from './dto/fund-wallet.dto';
+import { TradeDto } from './dto/trade.dto';
 
 @ApiTags('wallet')
 @ApiBearerAuth()
@@ -64,6 +65,16 @@ export class WalletController {
       user.id,
       fundWalletDto.currencyCode,
       fundWalletDto.amount,
+    );
+  }
+
+  @Post('trade')
+  async trade(@Req() req, @Body() tradeDto: TradeDto) {
+    const user = req.user; // Assuming the user is attached to the request object
+    return this.walletService.trade(
+      user.id,
+      tradeDto.targetCurrencyCode,
+      tradeDto.amount,
     );
   }
 }

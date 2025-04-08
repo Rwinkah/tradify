@@ -246,4 +246,91 @@ export class WalletService {
       },
     );
   }
+
+  async trade(id: number, targetCurrencyCode: string, amount: number) {
+    if (amount <= 0) {
+      throw new BadRequestException('Trade amount must be greater than zero');
+    }
+
+    // Validate the target currency code
+    await this.validateCurrencyCode(targetCurrencyCode);
+
+    const conversionRate = 0.5; // Fixed conversion rate for NGN to target currency
+
+    return await this.walletBalanceRepository.manager.transaction(
+      async (transactionManager: EntityManager) => {
+        // Find the NGN wallet balance
+        const ngnWalletBalance = await transactionManager
+          .getRepository(WalletBalance)
+          .findOne({
+            where: {
+              wallet: { user: { id } },
+              currency: { code: 'NGN' }, // NGN is the source currency
+            },
+            relations: ['wallet', 'currency'],
+          });
+
+        if (!ngnWalletBalance) {
+          throw new NotFoundException('No NGN balance found for the user');
+        }
+
+        if (ngnWalletBalance.amount < amount) {
+          throw new BadRequestException(
+            'Insufficient NGN balance for the trade',
+          );
+        }
+
+        // Deduct the trade amount from the NGN balance
+        ngnWalletBalance.amount -= amount;
+        await transactionManager.save(WalletBalance, ngnWalletBalance);
+
+        // Find the target currency wallet balance
+        const targetWalletBalance = await transactionManager
+          .getRepository(WalletBalance)
+          .findOne({
+            where: {
+              wallet: { user: { id } },
+              currency: { code: targetCurrencyCode },
+            },
+            relations: ['wallet', 'currency'],
+          });
+
+        if (!targetWalletBalance) {
+          throw new NotFoundException(
+            `No balance found for currency: ${targetCurrencyCode}`,
+          );
+        }
+
+        // Convert the amount and add it to the target currency balance
+        const convertedAmount = amount * conversionRate;
+        targetWalletBalance.amount += convertedAmount;
+        await transactionManager.save(WalletBalance, targetWalletBalance);
+
+        // Save the trade transaction
+        const wallet = await transactionManager
+          .getRepository(Wallet)
+          .findOne({ where: { id: ngnWalletBalance.wallet.id } });
+
+        if (!wallet) {
+          throw new NotFoundException('Wallet not found for the user');
+        }
+
+        await this.transactionService.saveTransaction(
+          wallet,
+          amount,
+          'trade',
+          ngnWalletBalance.currency,
+          transactionManager,
+          targetCurrencyCode,
+        );
+
+        return {
+          from: ngnWalletBalance,
+          to: targetWalletBalance,
+          conversionRate,
+          convertedAmount,
+        };
+      },
+    );
+  }
 }
