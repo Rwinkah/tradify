@@ -76,7 +76,6 @@ npm run start:dev
 # Currency Management:
 
 All currency codes are validated against the Currency table before performing operations.
-Currency swaps use a fixed conversion rate of 0.5.
 
 # Transaction Management:
 
