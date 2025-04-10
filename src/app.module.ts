@@ -9,9 +9,15 @@ import { NotificationModule } from './notification/notification.module';
 import { RedisModule } from './redis/redis.module';
 import { WalletModule } from './wallet/wallet.module';
 import { TransactionModule } from './transaction/transaction.module';
+import { FxRateModule } from './fxrate/fxrate.module';
+import { CurrencyModule } from './currency/currency.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot({
+      global: true,
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -35,8 +41,10 @@ import { TransactionModule } from './transaction/transaction.module';
     AuthModule,
     NotificationModule,
     RedisModule,
+    CurrencyModule,
     WalletModule,
     TransactionModule,
+    FxRateModule,
   ],
   controllers: [AppController],
   providers: [AppService],

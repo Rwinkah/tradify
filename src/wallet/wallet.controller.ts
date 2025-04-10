@@ -13,7 +13,7 @@ import { GetCurrencyBalanceDto } from './dto/get-currency-balance.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConvertCurrencyDto } from './dto/convert-currency.dto';
 import { FundWalletDto } from './dto/fund-wallet.dto';
-import { TradeDto } from './dto/trade.dto';
+import { TradeDto } from './dto/wallet-trade.dto';
 
 @ApiTags('wallet')
 @ApiBearerAuth()
@@ -25,7 +25,7 @@ export class WalletController {
   @Get()
   getAllWallets(@Req() req) {
     const user = req.user;
-    return this.walletService.getAllWallets(user);
+    return this.walletService.getAllWallets(user.sub);
   }
 
   @ApiOperation({ summary: 'Get balance for specific currency' })
@@ -34,7 +34,7 @@ export class WalletController {
     @Req() req,
     @Body() getCurrencyBalanceDto: GetCurrencyBalanceDto,
   ) {
-    const id = req.user.id;
+    const id = req.user.sub;
 
     return this.walletService.getWalletBalance(
       id,
@@ -50,7 +50,7 @@ export class WalletController {
   ) {
     const user = req.user;
     return this.walletService.swap(
-      user.id,
+      user.sub,
       convertCurrencyDto.fromCurrencyCode,
       convertCurrencyDto.toCurrencyCode,
       convertCurrencyDto.amount,
@@ -62,7 +62,7 @@ export class WalletController {
   fundWalletBalance(@Req() req, @Body() fundWalletDto: FundWalletDto) {
     const user = req.user;
     return this.walletService.deposit(
-      user.id,
+      user.sub,
       fundWalletDto.currencyCode,
       fundWalletDto.amount,
     );
@@ -72,7 +72,7 @@ export class WalletController {
   async trade(@Req() req, @Body() tradeDto: TradeDto) {
     const user = req.user; // Assuming the user is attached to the request object
     return this.walletService.trade(
-      user.id,
+      user.sub,
       tradeDto.targetCurrencyCode,
       tradeDto.amount,
     );

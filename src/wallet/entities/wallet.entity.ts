@@ -19,6 +19,7 @@ export class Wallet {
 
   @OneToMany(() => WalletBalance, (balance) => balance.wallet, {
     cascade: true,
+    eager: true,
   })
   balances: WalletBalance[];
 

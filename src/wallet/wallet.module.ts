@@ -1,23 +1,24 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { WalletController } from './wallet.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { Wallet } from './entities/wallet.entity';
 import { WalletBalance } from './entities/wallet-balance.entity';
-import { Currency } from './entities/currency.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersService } from 'src/users/users.service';
+import { FxRateModule } from '../fxrate/fxrate.module';
+import { TransactionModule } from '../transaction/transaction.module';
 import { UsersModule } from 'src/users/users.module';
-import { TransactionModule } from 'src/transaction/transaction.module';
-import { TransactionService } from 'src/transaction/transaction.service';
+import { CurrencyModule } from 'src/currency/currency.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Wallet, WalletBalance, Currency]),
-    UsersModule,
+    TypeOrmModule.forFeature([Wallet, WalletBalance]),
+    FxRateModule, // Import FxRateModule
     TransactionModule,
+    forwardRef(() => UsersModule),
+    CurrencyModule,
   ],
   controllers: [WalletController],
-  providers: [WalletService, UsersService, TransactionService],
+  providers: [WalletService],
   exports: [TypeOrmModule, WalletService],
 })
 export class WalletModule {}

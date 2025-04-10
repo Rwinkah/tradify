@@ -1,6 +1,9 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
@@ -8,38 +11,25 @@ import { EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Wallet } from './entities/wallet.entity';
 import { WalletBalance } from './entities/wallet-balance.entity';
-import { Currency } from './entities/currency.entity';
+import { Currency } from '../currency/entities/currency.entity';
 import { TransactionService } from 'src/transaction/transaction.service';
+import { FxRateService } from '../fxrate/fxrate.service';
+import { CurrencyService } from 'src/currency/currency.service';
+import { User } from 'src/users/entities/user.entity';
+import { OnEvent } from '@nestjs/event-emitter';
+import { Transaction } from 'src/transaction/entities/transaction.entity';
 
 @Injectable()
 export class WalletService {
   constructor(
-    private usersService: UsersService,
+    private currencyService: CurrencyService,
     @InjectRepository(Wallet) private walletRepository: Repository<Wallet>,
+    @Inject(forwardRef(() => UsersService)) private usersService: UsersService,
     @InjectRepository(WalletBalance)
     private walletBalanceRepository: Repository<WalletBalance>,
-    @InjectRepository(Currency)
-    private currencyRepository: Repository<Currency>,
     private transactionService: TransactionService,
+    private readonly fxRateService: FxRateService,
   ) {}
-
-  private async validateCurrencyCode(currencyCode: string): Promise<Currency> {
-    const currency = await this.currencyRepository.findOne({
-      where: { code: currencyCode },
-    });
-
-    if (!currency) {
-      throw new BadRequestException(
-        `Currency with code "${currencyCode}" does not exist`,
-      );
-    }
-
-    return currency;
-  }
-
-  async getCurrencyById(id: string) {
-    return await this.currencyRepository.findOne({ where: { id } });
-  }
 
   async getParentWallet(id: string) {
     return await this.walletRepository.findOne({
@@ -61,6 +51,7 @@ export class WalletService {
     if (!wallet) {
       throw new NotFoundException('Wallet not found for the user');
     }
+    console.log(wallet, wallet.balances);
     return wallet.balances;
   }
 
@@ -89,7 +80,7 @@ export class WalletService {
       throw new BadRequestException('Deposit amount must be greater than zero');
     }
 
-    await this.validateCurrencyCode(currencyCode);
+    await this.currencyService.validateCurrencyCode(currencyCode);
 
     return await this.walletBalanceRepository.manager.transaction(
       async (transactionManager: EntityManager) => {
@@ -123,7 +114,7 @@ export class WalletService {
         await this.transactionService.saveTransaction(
           wallet,
           amount,
-          'deposit',
+          'DEPOSIT',
           walletBalance.currency,
           transactionManager, // Pass the transaction manager
         );
@@ -139,7 +130,7 @@ export class WalletService {
       );
     }
 
-    await this.validateCurrencyCode(currencyCode);
+    await this.currencyService.validateCurrencyCode(currencyCode);
 
     return await this.walletBalanceRepository.manager.transaction(
       async (transactionManager: EntityManager) => {
@@ -169,6 +160,13 @@ export class WalletService {
 
         await transactionManager.save(WalletBalance, walletBalance);
 
+        await transactionManager.save(Transaction, {
+          wallet: walletBalance.wallet,
+          amount: amount,
+          type: 'WITHDRAW',
+          currency: walletBalance.currency,
+        });
+
         return walletBalance;
       },
     );
@@ -184,10 +182,14 @@ export class WalletService {
       throw new BadRequestException('Swap amount must be greater than zero');
     }
 
-    await this.validateCurrencyCode(fromCurrencyCode);
-    await this.validateCurrencyCode(toCurrencyCode);
+    await this.currencyService.validateCurrencyCode(fromCurrencyCode);
+    await this.currencyService.validateCurrencyCode(toCurrencyCode);
 
-    const conversionRate = 0.5; // Fixed conversion rate
+    // Fetch the exchange rate
+    const conversionRate = await this.fxRateService.getExchangeRate(
+      fromCurrencyCode,
+      toCurrencyCode,
+    );
 
     return await this.walletBalanceRepository.manager.transaction(
       async (transactionManager: EntityManager) => {
@@ -216,7 +218,6 @@ export class WalletService {
         fromWalletBalance.amount -= amount;
         await transactionManager.save(WalletBalance, fromWalletBalance);
 
-        // Deposit into the target currency
         const toWalletBalance = await transactionManager
           .getRepository(WalletBalance)
           .findOne({
@@ -236,6 +237,13 @@ export class WalletService {
         const convertedAmount = amount * conversionRate;
         toWalletBalance.amount += convertedAmount;
         await transactionManager.save(WalletBalance, toWalletBalance);
+        await transactionManager.save(Transaction, {
+          wallet: fromWalletBalance.wallet,
+          amount: amount,
+          type: 'SWAP',
+          currency: fromWalletBalance.currency,
+          toCurrencyCode: toCurrencyCode,
+        });
 
         return {
           from: fromWalletBalance,
@@ -252,20 +260,22 @@ export class WalletService {
       throw new BadRequestException('Trade amount must be greater than zero');
     }
 
-    // Validate the target currency code
-    await this.validateCurrencyCode(targetCurrencyCode);
+    await this.currencyService.validateCurrencyCode(targetCurrencyCode);
 
-    const conversionRate = 0.5; // Fixed conversion rate for NGN to target currency
+    // Fetch the exchange rate
+    const conversionRate = await this.fxRateService.getExchangeRate(
+      'NGN',
+      targetCurrencyCode,
+    );
 
     return await this.walletBalanceRepository.manager.transaction(
       async (transactionManager: EntityManager) => {
-        // Find the NGN wallet balance
         const ngnWalletBalance = await transactionManager
           .getRepository(WalletBalance)
           .findOne({
             where: {
               wallet: { user: { id } },
-              currency: { code: 'NGN' }, // NGN is the source currency
+              currency: { code: 'NGN' },
             },
             relations: ['wallet', 'currency'],
           });
@@ -280,11 +290,9 @@ export class WalletService {
           );
         }
 
-        // Deduct the trade amount from the NGN balance
         ngnWalletBalance.amount -= amount;
         await transactionManager.save(WalletBalance, ngnWalletBalance);
 
-        // Find the target currency wallet balance
         const targetWalletBalance = await transactionManager
           .getRepository(WalletBalance)
           .findOne({
@@ -301,28 +309,17 @@ export class WalletService {
           );
         }
 
-        // Convert the amount and add it to the target currency balance
         const convertedAmount = amount * conversionRate;
         targetWalletBalance.amount += convertedAmount;
         await transactionManager.save(WalletBalance, targetWalletBalance);
 
-        // Save the trade transaction
-        const wallet = await transactionManager
-          .getRepository(Wallet)
-          .findOne({ where: { id: ngnWalletBalance.wallet.id } });
-
-        if (!wallet) {
-          throw new NotFoundException('Wallet not found for the user');
-        }
-
-        await this.transactionService.saveTransaction(
-          wallet,
-          amount,
-          'trade',
-          ngnWalletBalance.currency,
-          transactionManager,
-          targetCurrencyCode,
-        );
+        await transactionManager.save(Transaction, {
+          wallet: ngnWalletBalance.wallet,
+          amount: amount,
+          type: 'TRADE',
+          currency: ngnWalletBalance.currency,
+          toCurrencyCode: targetCurrencyCode,
+        });
 
         return {
           from: ngnWalletBalance,
@@ -333,4 +330,46 @@ export class WalletService {
       },
     );
   }
+
+  // async initWallet(user: User) {
+  //   const existingWallet = await this.walletRepository.findOne({
+  //     where: { user },
+  //   });
+
+  //   if (existingWallet) {
+  //     throw new BadRequestException('Wallet already exists for this user');
+  //   }
+  //   const wallet = this.walletRepository.create({ user });
+
+  //   const savedWallet = await this.walletRepository.save(wallet);
+
+  //   const defaultCurrency = await this.currencyService.getDefaultCurrency();
+
+  //   console.log(defaultCurrency, 'default currency');
+
+  //   if (
+  //     !defaultCurrency ||
+  //     defaultCurrency === null ||
+  //     defaultCurrency === undefined
+  //   ) {
+  //     throw new InternalServerErrorException('No default currency ');
+  //   }
+
+  //   const amount = this.currencyService.mockOrRealData();
+
+  //   const walletBalance = this.walletBalanceRepository.create({
+  //     wallet: savedWallet,
+  //     currency: defaultCurrency,
+  //     amount: amount,
+  //     // c
+  //     // wallet: savedWallet,
+
+  //     // currency: defaultCurrency,
+  //     // amount: amount
+  //   });
+
+  //   await this.walletBalanceRepository.save(walletBalance);
+
+  //   return savedWallet;
+  // }
 }

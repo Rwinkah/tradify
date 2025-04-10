@@ -45,7 +45,10 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   lastActive: Date;
 
-  @OneToOne(() => Wallet, (wallet) => wallet.user, { cascade: true })
+  @OneToOne(() => Wallet, (wallet) => wallet.user, {
+    cascade: true,
+    eager: true,
+  })
   @JoinColumn()
   wallet: Wallet;
 }

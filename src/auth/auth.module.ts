@@ -28,13 +28,7 @@ import { RedisModule } from 'src/redis/redis.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [
-    AuthService,
-    UsersService,
-    NotificationService,
-    RedisService,
-    { provide: APP_GUARD, useClass: AuthGuard },
-  ],
+  providers: [AuthService, { provide: APP_GUARD, useClass: AuthGuard }],
   controllers: [AuthController],
   exports: [AuthService],
 })

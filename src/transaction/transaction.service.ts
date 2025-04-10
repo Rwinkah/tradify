@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { Transaction } from './entities/transaction.entity';
 import { Wallet } from 'src/wallet/entities/wallet.entity';
-import { Currency } from 'src/wallet/entities/currency.entity';
+import { Currency } from 'src/currency/entities/currency.entity';
 
 @Injectable()
 export class TransactionService {
@@ -27,7 +27,7 @@ export class TransactionService {
 
     const transaction = new Transaction();
     transaction.wallet = wallet;
-    transaction.fromCurrency = originCurrency;
+    transaction.currency = originCurrency;
     transaction.amount = amount;
     transaction.type = type;
     transaction.toCurrencyCode = toCurrencyCode ?? '';

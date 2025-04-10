@@ -1,0 +1,5 @@
+[
+    { "code": "USD", "name": "United States Dollar" },
+    { "code": "EUR", "name": "Euro" },
+    { "code": "NGN", "name": "Nigerian Naira" }
+  ]

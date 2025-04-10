@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Wallet } from 'src/wallet/entities/wallet.entity';
-import { Currency } from 'src/wallet/entities/currency.entity';
+import { Currency } from 'src/currency/entities/currency.entity';
 import { IsEnum } from 'class-validator';
 
 @Entity('transaction')
@@ -15,10 +15,7 @@ export class Transaction {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  walletId: number;
-
-  @ManyToOne(() => Wallet)
+  @ManyToOne(() => Wallet, { eager: true })
   @JoinColumn({ name: 'walletId' })
   wallet: Wallet;
 
@@ -28,12 +25,12 @@ export class Transaction {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   timestamp: Date;
 
-  @IsEnum(['swap', 'deposit', 'trade', 'fund'])
+  @IsEnum(['SWAP', 'DEPOSIT', 'TRADE', 'FUND'])
   type: string;
 
-  @ManyToOne(() => Currency)
+  @ManyToOne(() => Currency, { eager: true })
   @JoinColumn({ name: 'fromCurrencyCode' })
-  fromCurrency: Currency;
+  currency: Currency;
 
   @Column({ nullable: true })
   toCurrencyCode: string;

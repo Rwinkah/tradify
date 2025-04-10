@@ -4,9 +4,10 @@ import {
   Column,
   ManyToOne,
   VersionColumn,
+  JoinColumn,
 } from 'typeorm';
 import { Wallet } from './wallet.entity';
-import { Currency } from './currency.entity';
+import { Currency } from '../../currency/entities/currency.entity';
 @Entity('walletBalances')
 export class WalletBalance {
   @PrimaryGeneratedColumn('uuid')
@@ -15,7 +16,8 @@ export class WalletBalance {
   @ManyToOne(() => Wallet, (wallet) => wallet.balances)
   wallet: Wallet;
 
-  @ManyToOne(() => Currency, (currency) => currency.balances)
+  @ManyToOne(() => Currency, (currency) => currency.balances, { eager: true })
+  @JoinColumn({ name: 'currencyCode' })
   currency: Currency;
 
   @Column({ type: 'decimal', precision: 20, scale: 8, default: 0 })
