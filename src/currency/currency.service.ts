@@ -23,6 +23,9 @@ export class CurrencyService {
     private configService: ConfigService,
   ) {}
 
+  async findAll() {
+    return await this.currencyRepository.find();
+  }
   async onModuleInit() {
     const loadCurency = this.configService.get<boolean>(
       'LOAD_DEFAULT_CURRENCIES',

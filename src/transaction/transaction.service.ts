@@ -36,9 +36,8 @@ export class TransactionService {
     return await transactionManager.save(Transaction, transaction);
   }
 
-  async getTransactions(queryParams: any) {
+  async getTransactions(userId: number, queryParams: any) {
     const {
-      walletId,
       type,
       startDate,
       endDate,
@@ -46,33 +45,32 @@ export class TransactionService {
       offset = 0, // Default offset
     } = queryParams;
 
-    const queryBuilder =
-      this.transactionRepository.createQueryBuilder('transaction');
+    const queryBuilder = this.transactionRepository
+      .createQueryBuilder('transactions')
+      .innerJoinAndSelect('transactions.wallet', 'wallets') // Join the Wallet table
+      .innerJoin('wallets.user', 'users') // Explicitly join the User table
+      .where('users.id = :userId', { userId });
 
     // Apply filters only if the query parameters are provided
-    if (walletId) {
-      queryBuilder.andWhere('transaction.walletId = :walletId', { walletId });
-    }
-
     if (type) {
-      queryBuilder.andWhere('transaction.type = :type', { type });
+      queryBuilder.andWhere('transactions.type = :type', { type });
     }
 
     if (startDate) {
-      queryBuilder.andWhere('transaction.timestamp >= :startDate', {
+      queryBuilder.andWhere('transactions.timestamp >= :startDate', {
         startDate,
       });
     }
 
     if (endDate) {
-      queryBuilder.andWhere('transaction.timestamp <= :endDate', { endDate });
+      queryBuilder.andWhere('transactions.timestamp <= :endDate', { endDate });
     }
 
     // Apply pagination and ordering
     queryBuilder
       .skip(offset)
       .take(limit)
-      .orderBy('transaction.timestamp', 'DESC');
+      .orderBy('transactions.timestamp', 'DESC');
 
     return await queryBuilder.getMany();
   }

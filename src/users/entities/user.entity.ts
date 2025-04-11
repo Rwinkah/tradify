@@ -6,7 +6,7 @@ import {
   OneToOne,
 } from 'typeorm';
 import { Wallet } from 'src/wallet/entities/wallet.entity';
-@Entity()
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;

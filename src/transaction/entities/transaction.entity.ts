@@ -10,7 +10,7 @@ import { Wallet } from 'src/wallet/entities/wallet.entity';
 import { Currency } from 'src/currency/entities/currency.entity';
 import { IsEnum } from 'class-validator';
 
-@Entity('transaction')
+@Entity('transactions')
 export class Transaction {
   @PrimaryGeneratedColumn()
   id: number;
@@ -29,7 +29,7 @@ export class Transaction {
   type: string;
 
   @ManyToOne(() => Currency, { eager: true })
-  @JoinColumn({ name: 'fromCurrencyCode' })
+  @JoinColumn({ name: 'currency', referencedColumnName: 'code' })
   currency: Currency;
 
   @Column({ nullable: true })

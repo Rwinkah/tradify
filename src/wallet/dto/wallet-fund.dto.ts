@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString } from 'class-validator';
 import { Column } from 'typeorm';
 
-export class FundWalletDto {
+export class WalletFundDto {
   @ApiProperty()
   @Column()
   @IsNumber()

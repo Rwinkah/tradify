@@ -9,11 +9,11 @@ import {
   Req,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
-import { GetCurrencyBalanceDto } from './dto/get-currency-balance.dto';
+import { WalletCurrencyBalance } from './dto/wallet-currency-balance.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ConvertCurrencyDto } from './dto/convert-currency.dto';
-import { FundWalletDto } from './dto/fund-wallet.dto';
-import { TradeDto } from './dto/wallet-trade.dto';
+import { WalletConvertDto } from './dto/wallet-convert.dto';
+import { WalletFundDto } from './dto/wallet-fund.dto';
+import { WalletTradeDto } from './dto/wallet-trade.dto';
 
 @ApiTags('wallet')
 @ApiBearerAuth()
@@ -32,7 +32,7 @@ export class WalletController {
   @Post(':currency')
   getCurrencyBalance(
     @Req() req,
-    @Body() getCurrencyBalanceDto: GetCurrencyBalanceDto,
+    @Body() getCurrencyBalanceDto: WalletCurrencyBalance,
   ) {
     const id = req.user.sub;
 
@@ -42,11 +42,11 @@ export class WalletController {
     );
   }
 
-  @ApiOperation({ summary: 'Get balance for specific currency' })
+  @ApiOperation({ summary: 'Convert between currency pairs' })
   @Post('convert')
   convertBetweenCurrency(
     @Req() req,
-    @Body() convertCurrencyDto: ConvertCurrencyDto,
+    @Body() convertCurrencyDto: WalletConvertDto,
   ) {
     const user = req.user;
     return this.walletService.swap(
@@ -59,7 +59,7 @@ export class WalletController {
 
   @ApiOperation({ summary: 'Fund wallet balance ' })
   @Post('fund')
-  fundWalletBalance(@Req() req, @Body() fundWalletDto: FundWalletDto) {
+  fundWalletBalance(@Req() req, @Body() fundWalletDto: WalletFundDto) {
     const user = req.user;
     return this.walletService.deposit(
       user.sub,
@@ -69,7 +69,7 @@ export class WalletController {
   }
 
   @Post('trade')
-  async trade(@Req() req, @Body() tradeDto: TradeDto) {
+  async trade(@Req() req, @Body() tradeDto: WalletTradeDto) {
     const user = req.user; // Assuming the user is attached to the request object
     return this.walletService.trade(
       user.sub,

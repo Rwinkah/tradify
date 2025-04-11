@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNumber, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 
-export class GetCurrencyBalanceDto {
+export class WalletCurrencyBalance {
   @ApiProperty()
   @IsString()
   currencyCode: string;

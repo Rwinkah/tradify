@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString } from 'class-validator';
 
-export class TradeDto {
+export class WalletTradeDto {
   @ApiProperty({ description: 'The target currency code for the trade' })
   @IsString()
   targetCurrencyCode: string;

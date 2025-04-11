@@ -186,13 +186,14 @@ export class WalletService {
     await this.currencyService.validateCurrencyCode(toCurrencyCode);
 
     // Fetch the exchange rate
-    const conversionRate = await this.fxRateService.getExchangeRate(
+    const conversionRate = await this.fxRateService.fetchAndCacheRate(
       fromCurrencyCode,
       toCurrencyCode,
     );
 
     return await this.walletBalanceRepository.manager.transaction(
       async (transactionManager: EntityManager) => {
+        // Get the wallet balance for the `fromCurrency`
         const fromWalletBalance = await transactionManager
           .getRepository(WalletBalance)
           .findOne({
@@ -215,10 +216,12 @@ export class WalletService {
           );
         }
 
+        // Deduct the amount from the `fromCurrency` balance
         fromWalletBalance.amount -= amount;
         await transactionManager.save(WalletBalance, fromWalletBalance);
 
-        const toWalletBalance = await transactionManager
+        // Get or create the wallet balance for the `toCurrency`
+        let toWalletBalance = await transactionManager
           .getRepository(WalletBalance)
           .findOne({
             where: {
@@ -229,14 +232,44 @@ export class WalletService {
           });
 
         if (!toWalletBalance) {
-          throw new NotFoundException(
-            `No balance found for currency: ${toCurrencyCode}`,
-          );
+          // Create a new wallet balance for the `toCurrency`
+          const wallet = await transactionManager
+            .getRepository(Wallet)
+            .findOne({
+              where: { user: { id } },
+            });
+
+          if (!wallet) {
+            throw new NotFoundException('Wallet not found for the user');
+          }
+
+          const toCurrency = await transactionManager
+            .getRepository(Currency)
+            .findOne({
+              where: { code: toCurrencyCode },
+            });
+
+          if (!toCurrency) {
+            throw new NotFoundException(
+              `Currency not found for code: ${toCurrencyCode}`,
+            );
+          }
+
+          toWalletBalance = transactionManager.create(WalletBalance, {
+            wallet,
+            currency: toCurrency,
+            amount: 0, // Initialize with 0 balance
+          });
+
+          await transactionManager.save(WalletBalance, toWalletBalance);
         }
 
+        // Add the converted amount to the `toCurrency` balance
         const convertedAmount = amount * conversionRate;
         toWalletBalance.amount += convertedAmount;
         await transactionManager.save(WalletBalance, toWalletBalance);
+
+        // Save the transaction
         await transactionManager.save(Transaction, {
           wallet: fromWalletBalance.wallet,
           amount: amount,
@@ -263,7 +296,7 @@ export class WalletService {
     await this.currencyService.validateCurrencyCode(targetCurrencyCode);
 
     // Fetch the exchange rate
-    const conversionRate = await this.fxRateService.getExchangeRate(
+    const conversionRate = await this.fxRateService.fetchAndCacheRate(
       'NGN',
       targetCurrencyCode,
     );
@@ -330,46 +363,4 @@ export class WalletService {
       },
     );
   }
-
-  // async initWallet(user: User) {
-  //   const existingWallet = await this.walletRepository.findOne({
-  //     where: { user },
-  //   });
-
-  //   if (existingWallet) {
-  //     throw new BadRequestException('Wallet already exists for this user');
-  //   }
-  //   const wallet = this.walletRepository.create({ user });
-
-  //   const savedWallet = await this.walletRepository.save(wallet);
-
-  //   const defaultCurrency = await this.currencyService.getDefaultCurrency();
-
-  //   console.log(defaultCurrency, 'default currency');
-
-  //   if (
-  //     !defaultCurrency ||
-  //     defaultCurrency === null ||
-  //     defaultCurrency === undefined
-  //   ) {
-  //     throw new InternalServerErrorException('No default currency ');
-  //   }
-
-  //   const amount = this.currencyService.mockOrRealData();
-
-  //   const walletBalance = this.walletBalanceRepository.create({
-  //     wallet: savedWallet,
-  //     currency: defaultCurrency,
-  //     amount: amount,
-  //     // c
-  //     // wallet: savedWallet,
-
-  //     // currency: defaultCurrency,
-  //     // amount: amount
-  //   });
-
-  //   await this.walletBalanceRepository.save(walletBalance);
-
-  //   return savedWallet;
-  // }
 }

@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Wallet } from './wallet.entity';
 import { Currency } from '../../currency/entities/currency.entity';
-@Entity('walletBalances')
+@Entity('walletbalances')
 export class WalletBalance {
   @PrimaryGeneratedColumn('uuid')
   id: string;

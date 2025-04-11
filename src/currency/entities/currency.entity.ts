@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { WalletBalance } from '../../wallet/entities/wallet-balance.entity';
 
-@Entity()
+@Entity('currencys')
 export class Currency {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -1,16 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString } from 'class-validator';
 
-export class ConvertCurrencyDto {
+export class RateResponseDto {
   @ApiProperty()
   @IsString()
-  fromCurrencyCode: string;
+  baseCurrency: string;
 
   @ApiProperty()
   @IsString()
-  toCurrencyCode: string;
+  targetCurrency: string;
 
   @ApiProperty()
   @IsNumber()
-  amount: number;
+  rate: number;
 }

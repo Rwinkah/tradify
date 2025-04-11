@@ -60,8 +60,7 @@ export class UsersService {
       const newWallet = queryRunner.manager.create(Wallet, { user: savedUser });
       const savedWallet = await queryRunner.manager.save(Wallet, newWallet);
 
-      // Create the wallet balance
-
+      // Create the wallet balance for the default currency
       const initialAmount = this.currencyService.mockOrRealData();
       const newWalletBalance = queryRunner.manager.create(WalletBalance, {
         wallet: savedWallet,
@@ -69,12 +68,29 @@ export class UsersService {
         amount: initialAmount,
       });
       await queryRunner.manager.save(WalletBalance, newWalletBalance);
+
+      // Create wallet balances for all other currencies
+      const currencies = await queryRunner.manager.find(Currency);
+      const walletBalances = currencies
+        .filter((currency) => currency.code !== defCurrencyCode) // Exclude the default currency
+        .map((currency) =>
+          queryRunner.manager.create(WalletBalance, {
+            wallet: savedWallet,
+            currency,
+            amount: 0, // Initialize with 0 balance
+          }),
+        );
+
+      await queryRunner.manager.save(WalletBalance, walletBalances);
+
+      // Create a transaction for the default currency
       const newTransaction = queryRunner.manager.create(Transaction, {
         wallet: savedWallet,
         currency: defaultCurrency,
         amount: initialAmount,
         type: 'DEPOSIT',
       });
+      await queryRunner.manager.save(Transaction, newTransaction);
 
       // Commit the transaction
       await queryRunner.commitTransaction();

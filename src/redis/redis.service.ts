@@ -15,18 +15,13 @@ export class RedisService {
 
   async set(key: string, value: any, ttl?: number) {
     try {
-      console.log('Trying to set value');
-
       if (ttl) {
-        console.log('TTL is present:', ttl);
         await this.redisManager.setex(key, ttl, JSON.stringify(value)); // setex sets the value with TTL
       } else {
-        console.log('No TTL provided');
         await this.redisManager.set(key, JSON.stringify(value)); // Set without TTL
       }
 
       const storedValue = await this.get(key);
-      console.log('Value from store is:', storedValue);
 
       return storedValue;
     } catch (error) {
@@ -37,7 +32,7 @@ export class RedisService {
 
   async get(key: string): Promise<any> {
     const value = await this.redisManager.get(key);
-    console.log('this key', value);
+    console.log(key, value);
     return await this.redisManager.get(key);
   }
 
