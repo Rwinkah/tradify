@@ -33,7 +33,7 @@ import { VerifiedGuard } from './auth/verified-guard';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
         autoLoadEntities: true,
-        synchronize: true, // Set to false in production
+        synchronize: configService.get<boolean>('DB_SYNCHRONIZE'), // Set to false in production
         logging: true,
       }),
       inject: [ConfigService],
