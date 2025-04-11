@@ -17,8 +17,7 @@ export class TransactionController {
       user.sub,
       query,
     );
-    console.info('=======================================');
-    console.info('rewuested transation', transactions);
+
     return transactions;
   }
 }

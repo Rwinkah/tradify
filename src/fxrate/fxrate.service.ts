@@ -76,9 +76,6 @@ export class FxRateService {
         );
       }
     } catch (error) {
-      console.error(
-        `Error fetching rate for ${baseCurrency} -> ${targetCurrency}: ${error.message}`,
-      );
       throw new ServiceUnavailableException(
         `Error fetching rate for ${baseCurrency} -> ${targetCurrency}`,
       );

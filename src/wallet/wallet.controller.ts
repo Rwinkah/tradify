@@ -44,8 +44,7 @@ export class WalletController {
   @Post('fund')
   fundWalletBalance(@Req() req, @Body() fundWalletDto: WalletFundDto) {
     const user = req.user;
-    console.info(fundWalletDto, 'is dat recieved');
-    console.info('===============================================');
+
     return this.walletService.deposit(
       user.sub,
       fundWalletDto.currencyCode,

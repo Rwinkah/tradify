@@ -53,7 +53,6 @@ export class WalletService {
     if (!wallet) {
       throw new NotFoundException('Wallet not found for the user');
     }
-    // console.log(wallet, wallet.balances);
     return wallet.balances;
   }
 
@@ -98,18 +97,9 @@ export class WalletService {
           );
         }
 
-        console.info('+=================================================');
-        console.info(walletBalance.amount, 'balance before fund');
-        console.info('+=================================================');
-        console.info(amount, 'amount for fund');
-        console.info('+=================================================');
-
         walletBalance.amount = new Decimal(walletBalance.amount)
           .add(amount)
           .toNumber();
-
-        console.info(walletBalance.amount, 'balance after fund');
-        console.info('+=================================================');
 
         await transactionManager.save(WalletBalance, walletBalance);
 
@@ -231,20 +221,10 @@ export class WalletService {
           );
         }
 
-        // Deduct the amount from the `fromCurrency` balance
-        console.info(
-          '=========================================================',
-        );
-        console.info(fromWalletBalance, 'Is from balance before swap');
-
         fromWalletBalance.amount = new Decimal(fromWalletBalance.amount)
           .minus(amount)
           .toNumber();
-        console.info(amount, 'is swap amount');
-        console.info(
-          '=========================================================',
-        );
-        console.info(fromWalletBalance, 'Is from balance after swap');
+
         await transactionManager.save(WalletBalance, fromWalletBalance);
 
         // Get or create the wallet balance for the `toCurrency`
@@ -291,22 +271,9 @@ export class WalletService {
           await transactionManager.save(WalletBalance, toWalletBalance);
         }
 
-        // Add the converted amount to the `toCurrency` balance
-
-        console.info(
-          '=========================================================',
-        );
-        console.info(toWalletBalance, 'Is to balance before swap');
-
         const convertedAmount = new Decimal(amount)
           .times(conversionRate)
           .toNumber();
-
-        console.info(convertedAmount, 'is swap amount');
-        console.info(
-          '=========================================================',
-        );
-        console.info(toWalletBalance, 'Is to balance after swap');
 
         toWalletBalance.amount = new Decimal(toWalletBalance.amount)
           .add(convertedAmount)

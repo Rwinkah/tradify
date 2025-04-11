@@ -79,8 +79,6 @@ export class AuthService {
     const secret = authenticator.generateSecret();
     const otp = authenticator.generate(secret);
 
-    console.log('sercret and token', secret, otp);
-
     await this.redisService.set(email, secret, 240);
     return await this.notificationService.sendOtpEmail(
       email,
@@ -91,18 +89,13 @@ export class AuthService {
 
   async verifyEmailOtp(email: string, token: string) {
     const secret = await this.redisService.get(email);
-    console.log('sercret and token', secret, token);
 
     if (!secret) {
-      console.log('ERROR 1 OCCURED');
       throw new UnauthorizedException('OTP invalid or has expired');
     }
 
     const isValid = authenticator.verify({ token, secret });
     if (!isValid) {
-      console.log('ERROR 2 OCCURED');
-      console.log('data is', token, secret);
-
       throw new UnauthorizedException('OTP invalid or has expired');
     }
     return this.usersService.validateEmail(email);
