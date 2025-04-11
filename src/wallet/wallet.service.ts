@@ -5,6 +5,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { EntityManager, Repository } from 'typeorm';
@@ -18,6 +19,7 @@ import { CurrencyService } from 'src/currency/currency.service';
 
 import { Transaction } from 'src/transaction/entities/transaction.entity';
 import Decimal from 'decimal.js';
+import { VerifiedGuard } from 'src/auth/verified-guard';
 
 @Injectable()
 export class WalletService {

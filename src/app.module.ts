@@ -12,6 +12,7 @@ import { TransactionModule } from './transaction/transaction.module';
 import { FxRateModule } from './fxrate/fxrate.module';
 import { CurrencyModule } from './currency/currency.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { VerifiedGuard } from './auth/verified-guard';
 
 @Module({
   imports: [
@@ -47,6 +48,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     FxRateModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, VerifiedGuard],
 })
 export class AppModule {}

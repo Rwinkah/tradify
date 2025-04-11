@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { WalletCurrencyBalance } from './dto/wallet-currency-balance.dto';
@@ -14,6 +15,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { WalletConvertDto } from './dto/wallet-convert.dto';
 import { WalletFundDto } from './dto/wallet-fund.dto';
 import { WalletTradeDto } from './dto/wallet-trade.dto';
+import { VerifiedGuard } from 'src/auth/verified-guard';
 
 @ApiTags('wallet')
 @ApiBearerAuth()
@@ -21,6 +23,7 @@ import { WalletTradeDto } from './dto/wallet-trade.dto';
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
+  @UseGuards(VerifiedGuard)
   @ApiOperation({ summary: 'Convert between currency pairs' })
   @Post('convert')
   async convertBetweenCurrency(
@@ -36,6 +39,7 @@ export class WalletController {
     );
   }
 
+  @UseGuards(VerifiedGuard)
   @ApiOperation({ summary: 'Fund wallet balance ' })
   @Post('fund')
   fundWalletBalance(@Req() req, @Body() fundWalletDto: WalletFundDto) {
@@ -49,6 +53,7 @@ export class WalletController {
     );
   }
 
+  @UseGuards(VerifiedGuard)
   @Post('trade')
   async trade(@Req() req, @Body() tradeDto: WalletTradeDto) {
     const user = req.user; // Assuming the user is attached to the request object

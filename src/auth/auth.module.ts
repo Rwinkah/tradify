@@ -12,6 +12,7 @@ import { NotificationService } from 'src/notification/notification.service';
 import { NotificationModule } from 'src/notification/notification.module';
 import { RedisService } from 'src/redis/redis.service';
 import { RedisModule } from 'src/redis/redis.module';
+import { VerifiedGuard } from './verified-guard';
 
 @Module({
   imports: [
