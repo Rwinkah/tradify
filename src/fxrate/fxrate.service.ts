@@ -8,6 +8,7 @@ import { RedisService } from '../redis/redis.service';
 import { CurrencyService } from 'src/currency/currency.service';
 import { ConfigService } from '@nestjs/config';
 import { RateResponseDto } from './dto/rate-response.dto';
+import { isNumber } from 'class-validator';
 
 @Injectable()
 export class FxRateService {
@@ -50,8 +51,10 @@ export class FxRateService {
       if (!isNaN(parsedRate) && parsedRate > 0) {
         return parsedRate;
       } else {
-        console.warn(`Invalid cached rate for ${cacheKey}: ${cachedRate}`);
-        await this.redisService.delete(cacheKey); // Delete invalid cache
+        console.warn(
+          `Invalid cached rate for ${cacheKey}: ${cachedRate} ${parsedRate}`,
+        );
+        await this.redisService.delete(cacheKey); // Delete invalid cached rate
       }
     }
 
@@ -63,14 +66,11 @@ export class FxRateService {
         const rate = response.data.conversion_rate;
         await this.redisService.set(
           cacheKey,
-          rate.toString(),
+          rate,
           FxRateService.cacheDuration,
         );
         return rate;
       } else {
-        console.warn(
-          `No conversion rate found for ${baseCurrency} -> ${targetCurrency}`,
-        );
         throw new NotFoundException(
           `Rate not found for ${baseCurrency} -> ${targetCurrency}`,
         );
@@ -112,7 +112,7 @@ export class FxRateService {
     }
 
     try {
-      const rates = await Promise.all(fetchRatePromises);
+      rates = await Promise.all(fetchRatePromises);
       console.info('Successfully fetched and cached all exchange rates');
       return rates; // Return all rates to the client
     } catch (error) {

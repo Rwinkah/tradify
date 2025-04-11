@@ -20,7 +20,7 @@ export class WalletBalance {
   @JoinColumn({ name: 'currencyCode' })
   currency: Currency;
 
-  @Column({ type: 'decimal', precision: 20, scale: 8, default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   amount: number;
 
   @VersionColumn()

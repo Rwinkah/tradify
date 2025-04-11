@@ -21,6 +21,44 @@ import { WalletTradeDto } from './dto/wallet-trade.dto';
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
+  @ApiOperation({ summary: 'Convert between currency pairs' })
+  @Post('convert')
+  async convertBetweenCurrency(
+    @Req() req,
+    @Body() convertCurrencyDto: WalletConvertDto,
+  ) {
+    const user = req.user;
+    return await this.walletService.swap(
+      user.sub,
+      convertCurrencyDto.fromCurrencyCode,
+      convertCurrencyDto.toCurrencyCode,
+      convertCurrencyDto.amount,
+    );
+  }
+
+  @ApiOperation({ summary: 'Fund wallet balance ' })
+  @Post('fund')
+  fundWalletBalance(@Req() req, @Body() fundWalletDto: WalletFundDto) {
+    const user = req.user;
+    console.info(fundWalletDto, 'is dat recieved');
+    console.info('===============================================');
+    return this.walletService.deposit(
+      user.sub,
+      fundWalletDto.currencyCode,
+      fundWalletDto.amount,
+    );
+  }
+
+  @Post('trade')
+  async trade(@Req() req, @Body() tradeDto: WalletTradeDto) {
+    const user = req.user; // Assuming the user is attached to the request object
+    return this.walletService.trade(
+      user.sub,
+      tradeDto.targetCurrencyCode,
+      tradeDto.amount,
+    );
+  }
+
   @ApiOperation({ summary: 'Get balance for all currencies' })
   @Get()
   getAllWallets(@Req() req) {
@@ -39,42 +77,6 @@ export class WalletController {
     return this.walletService.getWalletBalance(
       id,
       getCurrencyBalanceDto.currencyCode,
-    );
-  }
-
-  @ApiOperation({ summary: 'Convert between currency pairs' })
-  @Post('convert')
-  convertBetweenCurrency(
-    @Req() req,
-    @Body() convertCurrencyDto: WalletConvertDto,
-  ) {
-    const user = req.user;
-    return this.walletService.swap(
-      user.sub,
-      convertCurrencyDto.fromCurrencyCode,
-      convertCurrencyDto.toCurrencyCode,
-      convertCurrencyDto.amount,
-    );
-  }
-
-  @ApiOperation({ summary: 'Fund wallet balance ' })
-  @Post('fund')
-  fundWalletBalance(@Req() req, @Body() fundWalletDto: WalletFundDto) {
-    const user = req.user;
-    return this.walletService.deposit(
-      user.sub,
-      fundWalletDto.currencyCode,
-      fundWalletDto.amount,
-    );
-  }
-
-  @Post('trade')
-  async trade(@Req() req, @Body() tradeDto: WalletTradeDto) {
-    const user = req.user; // Assuming the user is attached to the request object
-    return this.walletService.trade(
-      user.sub,
-      tradeDto.targetCurrencyCode,
-      tradeDto.amount,
     );
   }
 }

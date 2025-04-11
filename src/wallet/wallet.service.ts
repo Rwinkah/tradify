@@ -15,9 +15,9 @@ import { Currency } from '../currency/entities/currency.entity';
 import { TransactionService } from 'src/transaction/transaction.service';
 import { FxRateService } from '../fxrate/fxrate.service';
 import { CurrencyService } from 'src/currency/currency.service';
-import { User } from 'src/users/entities/user.entity';
-import { OnEvent } from '@nestjs/event-emitter';
+
 import { Transaction } from 'src/transaction/entities/transaction.entity';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class WalletService {
@@ -51,7 +51,7 @@ export class WalletService {
     if (!wallet) {
       throw new NotFoundException('Wallet not found for the user');
     }
-    console.log(wallet, wallet.balances);
+    // console.log(wallet, wallet.balances);
     return wallet.balances;
   }
 
@@ -76,10 +76,6 @@ export class WalletService {
   }
 
   async deposit(id: number, currencyCode: string, amount: number) {
-    if (amount <= 0) {
-      throw new BadRequestException('Deposit amount must be greater than zero');
-    }
-
     await this.currencyService.validateCurrencyCode(currencyCode);
 
     return await this.walletBalanceRepository.manager.transaction(
@@ -100,7 +96,18 @@ export class WalletService {
           );
         }
 
-        walletBalance.amount += amount;
+        console.info('+=================================================');
+        console.info(walletBalance.amount, 'balance before fund');
+        console.info('+=================================================');
+        console.info(amount, 'amount for fund');
+        console.info('+=================================================');
+
+        walletBalance.amount = new Decimal(walletBalance.amount)
+          .add(amount)
+          .toNumber();
+
+        console.info(walletBalance.amount, 'balance after fund');
+        console.info('+=================================================');
 
         await transactionManager.save(WalletBalance, walletBalance);
 
@@ -123,6 +130,7 @@ export class WalletService {
       },
     );
   }
+
   async withdraw(id: number, currencyCode: string, amount: number) {
     if (amount <= 0) {
       throw new BadRequestException(
@@ -156,7 +164,12 @@ export class WalletService {
           );
         }
 
-        walletBalance.amount -= amount;
+        const currentAmount = Math.round(walletBalance.amount * 100);
+        const depositAmount = Math.round(amount * 100);
+
+        const updatedAmount = currentAmount - depositAmount;
+
+        walletBalance.amount = updatedAmount / 100;
 
         await transactionManager.save(WalletBalance, walletBalance);
 
@@ -217,7 +230,19 @@ export class WalletService {
         }
 
         // Deduct the amount from the `fromCurrency` balance
-        fromWalletBalance.amount -= amount;
+        console.info(
+          '=========================================================',
+        );
+        console.info(fromWalletBalance, 'Is from balance before swap');
+
+        fromWalletBalance.amount = new Decimal(fromWalletBalance.amount)
+          .minus(amount)
+          .toNumber();
+        console.info(amount, 'is swap amount');
+        console.info(
+          '=========================================================',
+        );
+        console.info(fromWalletBalance, 'Is from balance after swap');
         await transactionManager.save(WalletBalance, fromWalletBalance);
 
         // Get or create the wallet balance for the `toCurrency`
@@ -265,8 +290,25 @@ export class WalletService {
         }
 
         // Add the converted amount to the `toCurrency` balance
-        const convertedAmount = amount * conversionRate;
-        toWalletBalance.amount += convertedAmount;
+
+        console.info(
+          '=========================================================',
+        );
+        console.info(toWalletBalance, 'Is to balance before swap');
+
+        const convertedAmount = new Decimal(amount)
+          .times(conversionRate)
+          .toNumber();
+
+        console.info(convertedAmount, 'is swap amount');
+        console.info(
+          '=========================================================',
+        );
+        console.info(toWalletBalance, 'Is to balance after swap');
+
+        toWalletBalance.amount = new Decimal(toWalletBalance.amount)
+          .add(convertedAmount)
+          .toNumber();
         await transactionManager.save(WalletBalance, toWalletBalance);
 
         // Save the transaction
@@ -323,7 +365,9 @@ export class WalletService {
           );
         }
 
-        ngnWalletBalance.amount -= amount;
+        ngnWalletBalance.amount = new Decimal(ngnWalletBalance.amount)
+          .minus(amount)
+          .toNumber();
         await transactionManager.save(WalletBalance, ngnWalletBalance);
 
         const targetWalletBalance = await transactionManager
@@ -342,8 +386,12 @@ export class WalletService {
           );
         }
 
-        const convertedAmount = amount * conversionRate;
-        targetWalletBalance.amount += convertedAmount;
+        const convertedAmount = new Decimal(amount)
+          .times(conversionRate)
+          .toNumber();
+        targetWalletBalance.amount = new Decimal(targetWalletBalance.amount)
+          .add(convertedAmount)
+          .toNumber();
         await transactionManager.save(WalletBalance, targetWalletBalance);
 
         await transactionManager.save(Transaction, {

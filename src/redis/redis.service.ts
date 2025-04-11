@@ -18,7 +18,8 @@ export class RedisService {
       if (ttl) {
         await this.redisManager.setex(key, ttl, JSON.stringify(value)); // setex sets the value with TTL
       } else {
-        await this.redisManager.set(key, JSON.stringify(value)); // Set without TTL
+        console.log('value set', value);
+        await this.redisManager.set(key, value); // Set without TTL
       }
 
       const storedValue = await this.get(key);

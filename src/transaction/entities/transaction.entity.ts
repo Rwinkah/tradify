@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Wallet } from 'src/wallet/entities/wallet.entity';
 import { Currency } from 'src/currency/entities/currency.entity';
-import { IsEnum } from 'class-validator';
+import { IsString } from 'class-validator';
 
 @Entity('transactions')
 export class Transaction {
@@ -25,7 +25,8 @@ export class Transaction {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   timestamp: Date;
 
-  @IsEnum(['SWAP', 'DEPOSIT', 'TRADE', 'FUND'])
+  @IsString()
+  @Column()
   type: string;
 
   @ManyToOne(() => Currency, { eager: true })

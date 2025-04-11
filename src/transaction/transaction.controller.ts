@@ -12,6 +12,13 @@ export class TransactionController {
   @Get('history')
   async findAll(@Req() req, @Query() query: any) {
     const user = req.user;
-    return this.transactionService.getTransactions(user.sub, query);
+
+    const transactions = await this.transactionService.getTransactions(
+      user.sub,
+      query,
+    );
+    console.info('=======================================');
+    console.info('rewuested transation', transactions);
+    return transactions;
   }
 }

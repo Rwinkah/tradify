@@ -44,7 +44,7 @@ DB_DATABASE=tradify_db
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
-# Other Configurations
+# Email Configurations
 EMAIL_HOST=smtp.example.com
 EMAIL_PORT=587
 EMAIL_USER=your_email_user

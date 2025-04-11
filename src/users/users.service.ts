@@ -17,6 +17,8 @@ import { Currency } from 'src/currency/entities/currency.entity';
 import { CurrencyService } from 'src/currency/currency.service';
 import { ConfigService } from '@nestjs/config';
 import { Transaction } from 'src/transaction/entities/transaction.entity';
+import { plainToInstance } from 'class-transformer';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -95,7 +97,7 @@ export class UsersService {
       // Commit the transaction
       await queryRunner.commitTransaction();
 
-      return savedUser;
+      return plainToInstance(UserResponseDto, savedUser);
     } catch (error) {
       // Rollback the transaction in case of an error
       await queryRunner.rollbackTransaction();
