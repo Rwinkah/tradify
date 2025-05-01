@@ -26,7 +26,7 @@ Tradify is a wallet management service built using the NestJS framework. It prov
 ## **Features**
 - User wallet management
 - Deposit and withdrawal functionality
-- Currency swaps with a fixed conversion rate
+- Currency swaps with real-time conversion rate
 - Transaction history with query filters
 - Redis integration for caching and OTP management
 - TypeORM for database interactions
@@ -34,28 +34,36 @@ Tradify is a wallet management service built using the NestJS framework. It prov
 
 ---
 
-## **Prerequisites**
-- **Node.js**: Version 22 or higher
-- **PostgreSQL**: Version 10 or higher
-- **Redis**: Version 5 or higher
-- **npm**: Version 7 or higher
+
 
 ---
 
 ## **Setup Instructions**
 
-### **1. Clone the Repository**
+You can set up the application using one of the following methods:
+
+### **1. Manual Setup**
+
+#### **Prerequisites**
+- **Node.js**: Version 22 or higher
+- **PostgreSQL**: Version 10 or higher
+- **Redis**: Version 5 or higher
+- **npm**: Version 7 or higher
+
+
+#### **Steps**
+1. **Clone the Repository**
 ```bash
-git clone <repository-url>
-cd tradify
+   git clone <repository-url>
+   cd tradify
 ```
 
-### **2. Install Dependencies**
+2. Install Dependencies**
 ```bash
 npm install
 ```
 
-### **3. Configure Environment Variables**
+3. Configure Environment Variables**
 Copy dummy env from `.env.example` and add the following configurations:
 
 ```markdown
@@ -87,12 +95,14 @@ MOCK_BALANCE=false (⚠️ **Warning:** Only set this to `true` for testing purp
 LOAD_DEFAULT_CURRENCIES=true (Set to `true` if you provide default currencies in `currencies.json`.)
 ```
 
-### **4. Set up the Database**
-
+4. Set up the Database**
+```bash
 psql -U postgres
 CREATE DATABASE tradify_db;
+```
+5. Set up Redis**
 
-### **5. Set up Redis**
+```bash
 # On Linux
 sudo systemctl start redis
 
@@ -101,12 +111,47 @@ brew services start redis
 
 # Verify Redis is running
 redis-cli ping
+```
 
-### **6. Start the application**
-
+6. Start the application**
+```bash
 npm run start:dev
-
+```
 ---
+
+
+
+
+
+
+
+
+
+
+### **2. Docker Setup**
+
+#### **Prerequisites**
+- **Docker**: Version 28.1.1 or higher
+- **Docker Compose**: Version 3.8 
+
+#### **Steps**
+1. **Clone the Repository**
+```bash
+   git clone <repository-url>
+   cd tradify
+```
+
+2. Configure Environment Variables**
+Copy dummy env from `.env.example` and update it with your configuation
+
+##### **WARNING! ⚠️** 
+**DB_HOST Must be 'postgres' and REDIS_HOST Must be 'redis' when using docker**
+
+3. Build and start the services
+``` bash
+docker-compose up --build
+```
+
 
 ## **API Documentation**
 The API documentation is available via Swagger. Once the application is running, you can access it at:
